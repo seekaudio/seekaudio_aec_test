@@ -1,0 +1,6 @@
+# Name,   Type, SubType,  Offset,   Size,
+nvs,      data, nvs,      0x9000,   0x6000,
+phy_init, data, phy,      0xf000,   0x1000,
+factory,  app,  factory,  0x10000,  0x400000,
+storage,  data, littlefs, 0x410000, 0x900000,
+model,    data, spiffs,   0xD10000, 0x100000,

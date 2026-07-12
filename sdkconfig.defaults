@@ -1,0 +1,49 @@
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+CONFIG_LITTLEFS_MAX_PARTITIONS=1
+CONFIG_LITTLEFS_PAGE_SIZE=256
+CONFIG_LITTLEFS_OBJ_NAME_LEN=64
+CONFIG_LITTLEFS_READ_SIZE=128
+CONFIG_LITTLEFS_WRITE_SIZE=128
+
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESP_CONSOLE_UART_NUM=0
+CONFIG_ESP_CONSOLE_UART_BAUDRATE=115200
+
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+
+# CPU frequency: 240 MHz (max for ESP32-S3). The IDF default is 160 MHz, which
+# would make every measurement 1.5x slower in wall-clock. Pin it so RTF and
+# per-frame numbers are comparable across setups.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# Main task stack. The AI denoise path runs its network inside the process()
+# call chain; 88 KB covers it with headroom. The benchmark prints the measured
+# minimum free stack after each run ("main_task stack: min free") -- tune with
+# that number if you change the pipeline.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=90112
+
+# Canary stack-overflow detection: prints a clear error instead of an opaque
+# DoubleException if a stack is undersized. Cheap; keep on.
+CONFIG_FREERTOS_CHECK_STACKOVERFLOW_CANARY=y
+
+# Compiler optimization: -O2 (performance) instead of the IDF default -Og, so
+# the harness itself does not distort the comparison.
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# esp-dsp: force the PIE-accelerated Xtensa-assembly kernels (required by the
+# prebuilt library's ESP-DSP FFT option; without it the ANSI C fallback is
+# linked and performance numbers are not representative).
+CONFIG_DSP_OPTIMIZED=y
+CONFIG_DSP_MAX_FFT_SIZE_4096=y
+
+# esp-sr: pack nsnet2 into srmodels.bin (needed by the B2 reference config).
+CONFIG_SR_NSN_NSNET2=y

@@ -1,0 +1,69 @@
+dependencies:
+  espressif/cjson:
+    component_hash: e788323270d90738662d66fffa910bfe1fba019bba087f01557e70c40485b469
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.7.19~2
+  espressif/dl_fft:
+    component_hash: 2f319e72f3ab6f673c83849d6a14b68c21165d4dce24e12af7c13714ba35a6e0
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.5.0
+  espressif/esp-dsp:
+    component_hash: 12e44db246517a627bc0fe2b255b8335410c0215c98bfba2df5a8e3edea839ef
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.2'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.8.0
+  espressif/esp-sr:
+    component_hash: 2d6bed3304928ec18b7a5904eb0a1ed735081f9248a59e90872cddeb161f978f
+    dependencies:
+    - name: idf
+      version: '>=5.0'
+    - name: espressif/esp-dsp
+      version: 1.8.0
+    - name: espressif/dl_fft
+      version: '>=0.2.0'
+    - name: espressif/cjson
+      version: ^1.7.19
+    source:
+      git: https://github.com/espressif/esp-sr.git
+      path: .
+      type: git
+    version: 7ff63a7da40e15e502681be48c4d0e78475544a3
+  idf:
+    source:
+      type: idf
+    version: 5.5.1
+  joltwallet/littlefs:
+    component_hash: dcea25bcef2de023f089f5f01e8d8c46ad1b8ffef75861ad5ffb4098555839df
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.20.4
+direct_dependencies:
+- espressif/esp-dsp
+- espressif/esp-sr
+- idf
+- joltwallet/littlefs
+manifest_hash: 6915489a816b5b35706490674bdcec43e9bc7776995ea7f04e4595e31adbbf46
+target: esp32s3
+version: 2.0.0
