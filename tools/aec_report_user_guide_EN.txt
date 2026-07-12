@@ -1,0 +1,469 @@
+================================================================================
+        SeekAudio AEC Evaluation Tool  aec_report.py  —  User Guide
+        (written for non-experts: no audio-algorithm background needed)
+================================================================================
+
+This guide has seven parts:
+  Part 1  What this tool does
+  Part 2  Quick start (three ways to run it)
+  Part 3  Meet the four tested configurations: A1 / A2 / B1 / B2
+  Part 4  Meet the three "talking scenarios" (echo / near-end / double-talk)
+  Part 5  Section-by-section walkthrough — what each metric actually means
+  Part 6  How to judge "good or bad" at a glance (cheat sheet)
+  Part 7  FAQ and things to watch out for
+
+================================================================================
+Part 1  What this tool does
+================================================================================
+
+First, what is "acoustic echo cancellation (AEC)"? Imagine you are on a call
+using speakerphone:
+  - The other person's voice (the far end) plays out of your loudspeaker;
+  - That sound is then picked up again by your microphone;
+  - If nothing is done about it, it gets treated as "your voice" and sent back
+    to the other person — so they hear their own voice come back at them after
+    a short delay. That is "echo," and it is very unpleasant.
+"Echo cancellation" is a set of algorithms whose job is to remove that
+"loudspeaker leakage echo" from the microphone signal, leaving only what you
+actually said. SeekAudio AEC is exactly such an algorithm library.
+
+What the aec_report.py tool does:
+  It takes the results the algorithm produced while running on the chip
+  (ESP32-S3) and automatically compiles them into a "health-check report"
+  that answers three questions:
+    1) Is it fast, and does it use chip resources efficiently? (compute, memory)
+    2) Is the echo removed cleanly? (echo suppression)
+    3) Does your own voice survive intact and sound natural, or is it damaged?
+       (near-end fidelity, perceptual quality)
+  It also places the SeekAudio solution side by side with a common
+  industry solution (esp-sr), so you can see at a glance who is better and
+  by how much.
+
+The tool itself does not run on the chip. It reads two kinds of "report cards":
+  - log.txt        — the log printed by the chip at run time (device-side data:
+                     compute, memory, echo, etc.)
+  - a set of wav files — the audio before and after processing, which the tool
+                     re-analyzes offline on your computer
+It then generates a text report, shown on screen and also saved as
+aec_report.txt.
+
+================================================================================
+Part 2  Quick start (three ways to run it)
+================================================================================
+
+[Files you need] Put the following in the same folder:
+    log.txt        chip log (required)
+    near.wav       the sound picked up by the microphone (near end)
+    far.wav        the other person's voice / loudspeaker reference (far end)
+    a1.wav a2.wav b1.wav b2.wav   the processed output of each of the four configs
+    Run_*Stage_0.onnx   (optional) the AECMOS scoring model; if missing, that
+                        section is skipped
+
+[Environment] Install Python 3 on your computer, then install dependencies as
+needed:
+    pip install numpy librosa onnxruntime
+  Notes:
+    - It runs even with only log.txt and no libraries installed; it will output
+      the "device-side compute/memory" sections;
+    - With numpy installed and wav files present, it can auto-detect scenarios
+      and compute the echo/fidelity metrics;
+    - For the AECMOS perceptual scores, you additionally need librosa,
+      onnxruntime, and that .onnx model.
+
+--------------------------------------------------------------------------------
+[Mode 1] Simplest: no arguments at all (auto-detect; easiest, but not
+                    necessarily the most accurate)
+--------------------------------------------------------------------------------
+    python aec_report.py
+
+  The tool does everything automatically, including figuring out "which part is
+  echo, which part is you talking, which part is both talking at once" — it
+  infers this from the near/far audio (see Part 4). The result is printed at the
+  top of the report so you can double-check it.
+
+  Note: auto-detection is usually fine for well-structured material, but for
+  material with reverberation or with pauses in the far-end speech it may chop
+  up the "pure-echo segment" or mistake it for double-talk, making the echo
+  metrics less accurate. So — **for the most accurate results, use [Mode 2]
+  below to specify the scene segments manually.** Auto-detection is better
+  suited as a "quick look" or as a cross-check against the manual result.
+
+--------------------------------------------------------------------------------
+[Mode 2] Tell it manually "which part is what" (★ recommended: most accurate)
+--------------------------------------------------------------------------------
+  This is the recommended way. Whenever you know the exact structure of the
+  material (e.g. you recorded/designed it yourself), specify the time ranges
+  directly — this overrides auto-detection and gives the result that best
+  matches the ground truth and is the most stable:
+    python aec_report.py --echo 0:10 --near 10:26 --dt 26:36
+
+  The three arguments are:
+    --echo   far-end single-talk segment (only the other side talks; pure echo)
+             e.g. 0:10 means second 0 to second 10
+    --near   near-end single-talk segment (only you talk; no echo)  e.g. 10:26
+    --dt     double-talk segment (both talk at once)                e.g. 26:36
+
+  Time-range format rules:
+    - The format is "start:end" in seconds; e.g. 0:10 means second 0 to 10;
+    - A category may have several segments, separated by commas, e.g.
+      --echo 0:8,30:36;
+    - Use -1 as the end to mean "all the way to the end of the file", e.g.
+      --dt 26:-1;
+    - Partial specification is supported: give only --dt, and echo/near still
+      use auto-detection.
+
+--------------------------------------------------------------------------------
+[Mode 3] Result files not in the script's folder: point to them with --dir
+--------------------------------------------------------------------------------
+    python aec_report.py --dir D:\out
+    python aec_report.py --dir D:\out --echo 0:8,30:36 --dt 26:-1
+
+  Tip: you can run `python aec_report.py --help` at any time to see the full
+  argument reference.
+
+================================================================================
+Part 3  Meet the four tested configurations: A1 / A2 / B1 / B2
+================================================================================
+
+A1/A2/B1/B2 appear throughout the report. They are four combined
+"echo-cancellation + noise-reduction" solutions. The A series is SeekAudio's
+own solution; the B series is the common industry esp-sr solution, used for
+comparison. All four share the same "echo-cancellation front end" and differ
+only in the "noise reduction" that follows, so they can be compared fairly:
+
+    A1 = SeekAudio solution + traditional NR (WebRTC NS)   — SeekAudio "standard"
+    A2 = SeekAudio solution + AI NR                        — SeekAudio "AI" tier
+    B1 = esp-sr solution    + traditional NR (ns_pro)      — competitor "standard"
+    B2 = esp-sr solution    + AI NR (NSNet2)               — competitor "AI" tier
+
+Comparisons are "same tier vs same tier":
+    A1 vs B1 (traditional vs traditional)
+    A2 vs B2 (AI vs AI)
+
+One-line memory aid: A is "ours", B is "the competitor's"; digit 1 is
+traditional NR, digit 2 is AI NR.
+
+================================================================================
+Part 4  Meet the three "talking scenarios" (echo / near-end / double-talk)
+================================================================================
+
+To evaluate an echo-cancellation algorithm you must look at it per scenario,
+because each scenario has different requirements:
+
+  ● Far-end single-talk (also called the "pure-echo segment"): only the other
+      side talks, you don't. In theory your microphone contains only "echo".
+      This tests: how cleanly is the echo removed.
+      — This is the purest scenario for judging "echo-cancellation ability".
+
+  ● Near-end single-talk: only you talk, the other side doesn't. There is no
+      echo here. This tests: whether your voice gets wrongly removed or sounds
+      unnatural.
+      — This is the scenario for judging "does it damage your speech".
+
+  ● Double-talk: both sides talk at once. The microphone now contains both echo
+      and your speech, mixed together. This is the hardest scenario: the
+      algorithm must remove the echo without also deleting your speech.
+
+Why distinguish them? An example: during double-talk, a good algorithm "goes
+easy" and preserves your voice, at the cost of removing the echo less
+thoroughly. So if you don't separate scenarios and lump double-talk into the
+"echo-cancellation ability" number, the figure gets dragged down and **the
+algorithm is treated unfairly**. The tool separates scenarios precisely so each
+is scored on its own — no unfair penalty, and no overstatement.
+
+How does the tool know which segment is which scenario?
+  - Manual (Mode 2): you tell it the time ranges directly — most accurate;
+  - Auto (Mode 1): it infers from the far/near audio — the other side is
+    playing sound = echo may be present; the other side is silent and you are
+    talking = near-end single-talk; the other side is playing sound but your
+    microphone signal also contains a component "unrelated to the other side's
+    sound" = double-talk. The result is printed for you to check; if it does not
+    match reality, simply correct it with --echo/--near/--dt.
+
+================================================================================
+Part 5  Section-by-section walkthrough — what each metric actually means
+================================================================================
+
+Before we start, here are a few recurring "units/concepts". Understand these and
+the whole report makes sense:
+
+  ★ dB (decibel): a way of expressing a "ratio", used to say "how many times
+      stronger/weaker". For energy: 10 dB ≈ 10x, 20 dB ≈ 100x, 30 dB ≈ 1000x.
+      So "echo weakened by 20 dB" = echo energy cut to one hundredth of the
+      original. Bigger = stronger.
+
+  ★ dBFS: a scale for the "absolute loudness" of sound. 0 dBFS is the loudest a
+      digital system can represent; everything below is negative, and the more
+      negative the quieter (-20 is quieter than -10; -60 is already very quiet).
+
+  ★ Frame: the algorithm does not process one sample at a time; it collects a
+      short chunk and processes it together. In this tool one frame = 32
+      milliseconds (a millisecond is one thousandth of a second). 36.74 seconds
+      is about 1148 frames.
+
+  ★ p95 (95th percentile): sort all frames by processing time and take the value
+      at the 95% position. In plain terms: "95% of frames are faster than this;
+      only the slowest 5% exceed it". It represents "how slow things get under
+      normal conditions" better than the maximum, and is not thrown off by a few
+      extreme frames.
+
+--------------------------------------------------------------------------------
+1. Device-side compute — how fast it runs and how much chip it uses
+--------------------------------------------------------------------------------
+This section's data comes from the chip log and reflects "real-time
+performance". The chip runs at 240 MHz.
+
+  ● CPU avg / p95 / max (average / 95th-pct / peak usage, %)
+      How much of the chip this algorithm uses. The three numbers are: the
+      average case, the busy case (p95), and the busiest single frame. Lower is
+      better — lower means it spares the chip and leaves headroom for other work.
+
+  ● Equivalent MHz
+      Converts "usage" into "how much clock speed was effectively consumed".
+      For example 26% of a 240 MHz chip ≈ 63 MHz. Lower = more efficient.
+
+  ● RTF (real-time factor)
+      "How many times faster than real time it computes". RTF = 3.78x means:
+      processing 1 second of audio took about 1/3.78 second. It must be > 1 to
+      keep up with real time (otherwise the audio backs up and stutters). Bigger
+      is better, more headroom.
+
+  ● Per-frame avg / p95 / max (time per frame, microseconds us; 1 us = one
+      millionth of a second)
+      How long it actually took to process one frame (32 ms of audio). Since one
+      frame's "time budget" is 32000 us (= 32 ms), as long as every frame
+      finishes within budget it won't stutter. Lower is better.
+
+  ● Busiest frame #
+      Which frame was the slowest. If it is an early frame (e.g. #0–#10), it is
+      usually just "startup warm-up" and is normal; only an isolated slow frame
+      in the middle is worth attention.
+
+  ● "Frame-miss rate" (the sentence in the note)
+      Whether any frame exceeded the 32000 us budget and could not finish in
+      time. In the report all four configs have a per-frame maximum far below
+      budget, so the "frame-miss rate = 0", meaning it is stable throughout and
+      not a single frame overran.
+
+--------------------------------------------------------------------------------
+2. Memory usage — how much chip memory it takes
+--------------------------------------------------------------------------------
+The chip has two kinds of memory: internal SRAM (fast, but scarce and precious)
+and PSRAM (plentiful, but slow). Saving internal SRAM is especially important.
+Lower numbers are better.
+
+  ● Internal SRAM create / +peak
+      "create" is the internal memory taken at algorithm initialization; "+peak"
+      is the extra spike reached during running. Their sum is the true internal
+      high-water mark at run time.
+
+  ● PSRAM create / +peak
+      Same idea, but for PSRAM (the slower, larger memory).
+
+  ● RAM total
+      The sum of internal SRAM + PSRAM at initialization; a reference for the
+      overall amount.
+
+  ● Flash model
+      Some solutions (such as B2's AI noise reduction, NSNet2) also need a
+      "model weights file" burned into the flash chip, taking extra flash space
+      (B2 needs about 1024 KB). The A series needs no external model file, so
+      this column shows "-". When comparing total footprint, include this
+      (internal + PSRAM + flash).
+
+  ● Stack headroom
+      How much space is left in the run-time "call stack". This is a safety
+      margin — bigger is safer (too small risks an overflow crash).
+
+--------------------------------------------------------------------------------
+3. Echo suppression — how cleanly the echo is removed (the core metric)
+--------------------------------------------------------------------------------
+This section answers "echo-cancellation ability". The single most important
+metric here is ERLE.
+
+  ● ERLE (echo suppression amount, dB) — the most important echo metric
+      Its full name is "Echo Return Loss Enhancement". Don't be scared by the
+      name; in plain terms it is:
+      **how many times the echo was weakened, expressed in dB — bigger is
+      better.**
+      For example ERLE = 24 dB means the echo energy was cut to about 1/250 of
+      the original.
+      Rule of thumb: 10 dB is already effective, 20 dB is clearly good, above
+      30 dB is very clean.
+
+    This section shows ERLE at two levels:
+
+    [Primary] Offline scene-aware ERLE (recomputed on the computer per scenario
+    segment — more accurate)
+       - Far-end single-talk ERLE: ERLE computed over the "pure-echo segment".
+         This is the cleanest, most relevant number for echo-cancellation
+         ability (because it excludes double-talk interference). Bigger is
+         better.
+       - Residual echo (dBFS): how quiet the leftover echo is after processing
+         (absolute loudness). The more negative the better — it means the echo
+         is pushed down quieter.
+       - Double-talk ERLE: ERLE over the double-talk segment. It is inherently
+         low, because during double-talk the algorithm must preserve your voice
+         and dare not crush the echo too hard — **a low number here is "by
+         design", not a defect.**
+
+    [Cross-check] Device-side log ERLE (computed by the chip itself, for
+    mutual verification)
+       - When the chip computes ERLE it cannot tell which segment is
+         double-talk, so its "echo-active / converged ERLE" mixes double-talk in
+         and gets dragged down by your speech, making the values conservative.
+         They serve only as a reference to compare against the primary numbers,
+         not as the final conclusion.
+       - "Far-end single-talk ERLE (buckets)" is the average of the pure-echo
+         buckets at the start of the chip's time-bucketed statistics (every 2
+         seconds); if the material happens to start with pure echo, this number
+         is comparable to the primary figure.
+
+  ● Echo input level (near-end mic, far-end single-talk segment, dBFS)
+      How loud the echo was in the microphone "before" processing. It is a
+      baseline: how much quieter the residual echo is than this tells you how
+      many dB of suppression was achieved.
+
+  Summary: for echo cancellation, mainly look at the [Primary] "far-end
+           single-talk ERLE" (bigger is better) and "residual echo" (more
+           negative is better). A low double-talk ERLE is normal.
+
+--------------------------------------------------------------------------------
+4. Near-end fidelity — is your own speech damaged
+--------------------------------------------------------------------------------
+Echo cancellation must not "overdo it" and cut away your voice too. This section
+measures "how well your voice is preserved".
+
+  ● Path delay (samples / milliseconds)
+      How much the sound is delayed from entering the algorithm to leaving it
+      (samples = sample points, milliseconds = time). Smaller delay is better
+      (too much makes the call feel "half a beat behind"). The report also gives
+      a "delay floor" — the minimum delay shared by all four configs — plus the
+      extra delay each adds on top of that floor.
+
+  ● Near-end single-talk correlation (0~1)
+      During "only you talking", how "similar" the processed sound is to your
+      original voice. 1 = identical, perfectly intact; the closer to 1 the
+      better, meaning the algorithm is very "transparent" and did not damage
+      your voice. Something like 0.99 is very good.
+
+  ● Double-talk correlation (0~1)
+      The similarity between the processed output and the original microphone
+      signal during double-talk. **Note: a low number here is normal**, because
+      during double-talk the algorithm deliberately removes the echo, so the
+      output is supposed to differ from the original microphone ("echo + your
+      speech"). So this is an "ambiguous metric" — not simply "higher is
+      better". For near-end fidelity during double-talk, look instead at the
+      AECMOS "double-talk Other" score in Section 5 below.
+
+--------------------------------------------------------------------------------
+5. AECMOS perceptual quality — an AI model simulating "human-ear scoring"
+--------------------------------------------------------------------------------
+(Requires the .onnx model file; if missing it shows "skipped".)
+The earlier metrics are "objective measurements". AECMOS is an open-source AI
+model from Microsoft that simulates "how good it sounds to a listener", scoring
+1~5, higher is better. It gives two kinds of scores:
+
+  ● Echo (echo score): how annoying the residual echo sounds. Higher means the
+      echo is less audible.
+  ● Other (other / naturalness score): whether your voice and the overall sound
+      are natural, or muffled from over-processing. Higher = more natural.
+  The report scores per scenario:
+    - Far-end single-talk Echo: in the pure-echo segment, how clean the echo
+      sounds
+    - Near-end single-talk Other: how natural your voice sounds when only you
+      talk
+    - Double-talk Echo / Double-talk Other: echo sound / voice naturalness
+      during double-talk
+    - Challenge composite: the average of the four items above (the Microsoft
+      AEC Challenge convention), an overview score.
+  For all of these, higher is better.
+
+--------------------------------------------------------------------------------
+6. Paired comparison — tells you directly "who wins"
+--------------------------------------------------------------------------------
+This section lays out all the earlier metrics, paired as A1-vs-B1 and A2-vs-B2,
+and marks the right of each row directly with "win: whom" or "≈ tie". The last
+line gives the single most important takeaway:
+
+  ● "-> A1 saves 47% compute vs B1"
+      It means: to reach the same tier of quality, SeekAudio's A1 used only about
+      half the chip compute of the competitor's B1. This is the core selling
+      point of the SeekAudio solution — the same job for half the effort.
+
+  How to read it: "win: A1" means A1 is better on that item. Note that "good"
+  points in different directions for different metrics (some higher-is-better,
+  some lower-is-better); the tool has already judged the winner in the correct
+  direction, so just read the verdict.
+
+================================================================================
+Part 6  How to judge "good or bad" at a glance (cheat sheet)
+================================================================================
+
+  Metric                    Direction        Quick meaning
+  ---------------------------------------------------------------------------
+  CPU usage                 lower is better   more chip-efficient
+  Equivalent MHz            lower is better   more chip-efficient
+  RTF (real-time factor)    higher is better  more headroom (must be > 1)
+  Per-frame time            lower is better   fine as long as < 32000 us
+  Internal SRAM / PSRAM     lower is better   more memory-efficient (internal
+                                              especially precious)
+  Stack headroom            higher is better  safer
+  Far-end single-talk ERLE  higher is better  ★ echo-cancellation ability, key
+  Residual echo dBFS        more negative     the leftover echo is quieter
+  Double-talk ERLE          low is normal     low is the "preserve your speech"
+                                              design trade-off
+  Path delay                lower is better    less "half a beat behind"
+  Near-end s.t. correlation closer to 1 better your voice less damaged
+  Double-talk correlation   ambiguous metric   don't read alone; see AECMOS
+  AECMOS items / composite  higher is better   simulates human-ear impression
+
+  One-line verdict: jump straight to "6. Paired comparison" and read each
+  "win: whom" and the final "compute saved".
+
+================================================================================
+Part 7  FAQ and things to watch out for
+================================================================================
+
+Q1: Should I care about the "scene boundaries" at the top of the report?
+  Give them a glance. If auto-detected [auto], check that the three time ranges
+  look right; if they do not match the material (e.g. you know the echo is at
+  0–10 s but it detected a bunch of fragments), specify them manually with
+  --echo/--near/--dt for a more stable result. When the material structure is
+  clear and you know the exact ranges, manual is recommended.
+
+Q2: Will auto-detection and manual specification give very different results?
+  At the conclusion level (who wins, how much compute is saved) they are usually
+  consistent; but the absolute numbers (especially far-end single-talk ERLE) can
+  differ by a few dB, because the two select different ranges of "pure-echo
+  frames". For well-structured material, manual segmentation fits the ground
+  truth better and the numbers are more stable; auto-segmentation is best used
+  as an "independent cross-check".
+
+Q3: Why do some sections show "skipped"?
+  Missing dependencies or missing files. You need numpy for auto-segmentation
+  and the audio metrics; you need librosa + onnxruntime plus the .onnx model for
+  the AECMOS section. With only log.txt, the "device-side compute/memory"
+  sections still output as usual.
+
+Q4: There are two sets of ERLE (primary vs device-side) — which do I trust?
+  Go by the [Primary] offline "far-end single-talk ERLE" (it excludes
+  double-talk and is the cleanest). The device-side set is computed by the chip
+  itself and, because it cannot tell double-talk apart, comes out low; use it
+  only as cross-verification, not as the final conclusion.
+
+Q5: During double-talk the ERLE and double-talk correlation are both low — is
+    the algorithm bad?
+  No. During double-talk the algorithm must preserve your voice and by design
+  does not crush the echo to the extreme — this is a deliberate trade-off.
+  Whether double-talk is handled well should be judged by the AECMOS
+  "double-talk Other" (the naturalness of your voice).
+
+Q6: Where is the report saved?
+  A copy is printed on screen, and it is also saved as aec_report.txt in the
+  result directory.
+
+================================================================================
+(End)  If any metric is still unclear, cross-reference the report against Part 5
+       of this guide item by item.
+================================================================================
