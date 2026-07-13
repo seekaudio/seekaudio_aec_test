@@ -3,16 +3,18 @@ dependencies:
   idf:
     version: '>=5.0.0'
   joltwallet/littlefs: "==1.20.4"
-  # Required by the prebuilt seekaudio_aec component when the library was built
-  # with its ESP-DSP FFT option (the default delivery). Harmless otherwise.
-  espressif/esp-dsp: "^1.5.0"
 
-  # The B1/B2 reference configs use the esp-sr Full-Duplex AEC
-  # (AEC_MODE_FD / aec_linear_process / aec_nlp_process), which exists ONLY on
-  # esp-sr git master -- it is NOT in any tagged release (2.1.5 / 2.2.0 / 2.2.2
-  # all lack AEC_MODE_FD).
-  espressif/esp-sr:
-    git: https://github.com/espressif/esp-sr.git
-    version: master
-    # For a reproducible build you can pin to a known commit instead:
-    #   version: 7ff63a7
+  # ---- PINNED to EXACT versions (do NOT use ^ / >= for the AEC deps) ----------
+  # esp-dsp (dsps_* fixed-point FFT) and esp-sr (aec_* full-duplex AEC) are the
+  # only third-party components the prebuilt seekaudio_aec .a references as
+  # UNDEFINED symbols. A drifting minor/patch can silently mismatch the .a's ABI,
+  # so pin BOTH with '==' and commit the generated dependencies.lock so the
+  # customer's solver cannot re-resolve them to a different build.
+  #
+  # esp-sr's full-duplex AEC (AEC_MODE_FD_LOW_COST / aec_linear_process /
+  # aec_nlp_process) shipped in the tagged registry 2.4.x line (Espressif,
+  # 2026-04), so it is pinned straight from the registry -- no git commit needed.
+  # esp-sr 2.4.x transitively requires esp-dsp ==1.8.0, matched here explicitly.
+  # These must be the EXACT versions the .a was built and CRC-validated against.
+  espressif/esp-sr:  "==2.4.5"
+  espressif/esp-dsp: "==1.8.0"

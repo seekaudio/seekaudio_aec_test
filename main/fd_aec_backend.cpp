@@ -135,13 +135,40 @@ static void fifo_pop(fifo_t *q, int16_t *dst, int n)
 /* ----- config + context -------------------------------------------------- */
 typedef enum { FD_CFG_A1 = 0, FD_CFG_A2, FD_CFG_B1, FD_CFG_B2 } fd_cfg_t;
 
+/* ---- B-path internal-SRAM demonstration toggle ----------------------------
+ * B_AEC_INTERNAL_SRAM = 0 (default): B1's and B2's FD linear AEC front-end +
+ *   harness buffers stay in PSRAM -- esp-sr's shipped default placement, i.e.
+ *   the reference configs are measured exactly as a customer gets them out of
+ *   the box, with no manual relocation of the competitor's memory. This is the
+ *   honest default for the A-vs-B comparison.
+ * B_AEC_INTERNAL_SRAM = 1: BOTH B1 and B2 are placed in internal SRAM instead,
+ *   giving them the same on-chip fast memory the A path uses. Purpose -- rebut a
+ *   "you handicapped the B configs with slow PSRAM" objection: with the toggle
+ *   on, B1/B2 per-frame CPU drops but they STILL lose to A1/A2, while their
+ *   internal SRAM balloons far past the A path's (B1 observed ~129 KB vs A1's
+ *   ~75 KB; B2 rises similarly). It shows the A-path advantage is algorithmic,
+ *   not a memory-placement trick, and that buying the B configs that much
+ *   internal SRAM is not worth it.
+ * NOTE: only the FD AEC front-end + harness buffers move (what b_caps_for
+ *   governs). B2's NSNet2 model weights (~0.5 MB) are loaded by esp-sr into
+ *   PSRAM independently and are NOT relocated -- they exceed internal SRAM.
+ * Forwarded by main/CMakeLists.txt, so:  idf.py -DB_AEC_INTERNAL_SRAM=1 build
+ * (CMake cache vars are sticky: pass =0 or `idf.py fullclean` to turn back off.) */
+#ifndef B_AEC_INTERNAL_SRAM
+#define B_AEC_INTERNAL_SRAM   0
+#endif
+
 /* Heap caps for a B-path config's harness buffers (the FD linear AEC front-end
- * via ac.caps, the reblock FIFOs, and the nsblk scratch). Both B1 and B2 keep
- * these in PSRAM -- the esp-sr default placement, i.e. each reference config is
- * measured exactly as shipped, with no manual relocation of the competitor's
- * memory. (The A path is placed by the SeekAudio library internally.) */
+ * via ac.caps, the reblock FIFOs, and the nsblk scratch). Default: both B1 and
+ * B2 in PSRAM (esp-sr shipped placement). With B_AEC_INTERNAL_SRAM=1, both B1
+ * and B2 move these to internal SRAM (see the toggle above); B2's NSNet2 model
+ * stays in PSRAM regardless. (The A path is placed by the library internally.) */
 static inline uint32_t b_caps_for(fd_cfg_t cfg)
 {
+#if B_AEC_INTERNAL_SRAM
+    if (cfg == FD_CFG_B1 || cfg == FD_CFG_B2)
+        return (uint32_t)(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
     (void)cfg;
     return (uint32_t)MALLOC_CAP_SPIRAM;
 }
@@ -200,8 +227,8 @@ static void *fd_create_cfg(const char *fmt, int flen, fd_cfg_t cfg)
 
     int sr = 16000;   /* FD is 16 kHz only */
 
-    /* Heap caps for this config's harness buffers. A path and B1 stay in PSRAM;
-     * B2 keeps them in internal SRAM (see b_caps_for). */
+    /* Heap caps for this config's harness buffers (see B_AEC_INTERNAL_SRAM):
+     * default B1 & B2 -> PSRAM (as shipped); with the toggle on, both -> internal. */
     const uint32_t bcap = b_caps_for(cfg);
 
     /* 1) FD linear AEC create. A path uses FD_AEC_MODE, B path FD_AEC_MODE_B. */

@@ -6,19 +6,19 @@ dependencies:
       require: private
       version: '>=5.0'
     source:
-      registry_url: https://components.espressif.com/
+      registry_url: https://components.espressif.com
       type: service
     version: 1.7.19~2
   espressif/dl_fft:
-    component_hash: 2f319e72f3ab6f673c83849d6a14b68c21165d4dce24e12af7c13714ba35a6e0
+    component_hash: a955ca29581de2177ddf25759273bd83f082b3c805e735fe6ee105858643989b
     dependencies:
     - name: idf
       require: private
       version: '>=5.0'
     source:
-      registry_url: https://components.espressif.com/
+      registry_url: https://components.espressif.com
       type: service
-    version: 0.5.0
+    version: 0.6.0
   espressif/esp-dsp:
     component_hash: 12e44db246517a627bc0fe2b255b8335410c0215c98bfba2df5a8e3edea839ef
     dependencies:
@@ -30,25 +30,31 @@ dependencies:
       type: service
     version: 1.8.0
   espressif/esp-sr:
-    component_hash: 2d6bed3304928ec18b7a5904eb0a1ed735081f9248a59e90872cddeb161f978f
+    component_hash: 70f252161c06dbf4e901025f83f119cbe53b6d94f19dd8018f5cd0d23df68ffa
     dependencies:
     - name: idf
+      require: private
       version: '>=5.0'
     - name: espressif/esp-dsp
+      registry_url: https://components.espressif.com
+      require: private
       version: 1.8.0
-    - name: espressif/dl_fft
-      version: '>=0.2.0'
     - name: espressif/cjson
+      registry_url: https://components.espressif.com
+      require: private
       version: ^1.7.19
+    - name: espressif/dl_fft
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=0.2.0'
     source:
-      git: https://github.com/espressif/esp-sr.git
-      path: .
-      type: git
-    version: 7ff63a7da40e15e502681be48c4d0e78475544a3
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.4.5
   idf:
     source:
       type: idf
-    version: 5.5.1
+    version: 5.3.3
   joltwallet/littlefs:
     component_hash: dcea25bcef2de023f089f5f01e8d8c46ad1b8ffef75861ad5ffb4098555839df
     dependencies:
@@ -64,6 +70,6 @@ direct_dependencies:
 - espressif/esp-sr
 - idf
 - joltwallet/littlefs
-manifest_hash: 6915489a816b5b35706490674bdcec43e9bc7776995ea7f04e4595e31adbbf46
+manifest_hash: 30ade1d95e5353814c8f031733d6923740412bb53d616da940805c218d3a2319
 target: esp32s3
 version: 2.0.0

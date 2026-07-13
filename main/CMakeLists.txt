@@ -56,7 +56,8 @@ foreach(opt
         FD_FILTER_LENGTH
         FD_NSPRO_MODE
         FD_NSNET_MODEL
-        B1_BYPASS_NS)
+        B1_BYPASS_NS
+        B_AEC_INTERNAL_SRAM)
     if(DEFINED ${opt})
         message(STATUS "seekaudio: forwarding ${opt}=${${opt}} to compile definitions")
         target_compile_definitions(${COMPONENT_LIB} PRIVATE ${opt}=${${opt}})
