@@ -111,6 +111,17 @@ needed:
       --dt 26:-1;
     - Partial specification is supported: give only --dt, and echo/near still
       use auto-detection.
+    - When the whole clip is a single scenario (all pure echo / all double-talk /
+      all near-end): give only that category and add --no-auto to turn off
+      auto-detection of the other two (otherwise the tool mis-detects segments
+      that do not exist and the result is wrong):
+        all pure echo   python aec_report.py --echo 0:11.22 --no-auto
+        all double-talk python aec_report.py --dt 0:36 --no-auto
+        all near-end    python aec_report.py --near 0:36 --no-auto
+    - You can also set a category to none, meaning "this clip has no such
+      scenario", e.g. echo + double-talk but no near single-talk:
+        python aec_report.py --echo 0:8 --near none --dt 8:11
+      (when all three are given, --no-auto is not needed.)
 
 --------------------------------------------------------------------------------
 [Mode 3] Result files not in the script's folder: point to them with --dir
@@ -375,9 +386,19 @@ model from Microsoft that simulates "how good it sounds to a listener", scoring
       talk
     - Double-talk Echo / Double-talk Other: echo sound / voice naturalness
       during double-talk
-    - Challenge composite: the average of the four items above (the Microsoft
-      AEC Challenge convention), an overview score.
+    - Composite: the average of the items above, an overview score. With all
+      four scenarios present it is the four-item average (the Microsoft AEC
+      Challenge convention); if the clip has only some scenarios (e.g. all pure
+      echo -> only "Far-end single-talk Echo"), the composite is the average of
+      whatever items are present, and the report annotates how many were covered
+      (e.g. 1/4). In other words, a missing scenario does not void the composite
+      -- it averages the items that exist; with a single scenario, the composite
+      equals that one item.
   For all of these, higher is better.
+  Note: when comparing composites across different clips, check they cover the
+  same number of items -- a four-item composite is not directly comparable to a
+  one-item composite. Within one report, A and B use the same clip and the same
+  coverage, so the A-vs-B composite comparison is valid.
 
 --------------------------------------------------------------------------------
 6. Paired comparison — tells you directly "who wins"
@@ -462,6 +483,17 @@ Q5: During double-talk the ERLE and double-talk correlation are both low — is
 Q6: Where is the report saved?
   A copy is printed on screen, and it is also saved as aec_report.txt in the
   result directory.
+
+Q7: My clip is entirely echo (or entirely double-talk, or entirely near-end) --
+    how do I test it?
+  Give only that category and add --no-auto to turn off auto-detection of the
+  other two, e.g. an all-pure-echo clip:
+    python aec_report.py --echo 0:11.22 --no-auto
+  Without --no-auto the tool auto-detects the near/double-talk you did not
+  specify and, on a single-scenario clip, mis-detects segments that do not
+  exist, making the result inaccurate. In the report the absent scenarios then
+  show "-", and the paired comparison shows "--" (not comparable, not a tie).
+  The composite equals the one scenario score that exists.
 
 ================================================================================
 (End)  If any metric is still unclear, cross-reference the report against Part 5

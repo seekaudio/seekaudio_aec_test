@@ -22,6 +22,12 @@ aec_report.py —— AEC 四配置评测 / 配对对比报告  (适配 seekaudio
       止用 -1 表示到文件结尾(如 26:-1)。
     - 支持"部分覆盖": 只给其中一两个, 未给的类别仍走自动检测。
       例: 只 python aec_report.py --dt 26:-1 => echo/near 自动, dt 用你给的。
+    - 整段只有一种场景(全程纯回声 / 全程双讲 / 全程近端): 只指定那一类, 再加
+      --no-auto 关闭对其余类别的自动检测(否则会在单一场景素材上误检):
+        全程纯回声  python aec_report.py --echo 0:11.22 --no-auto
+        全程双讲    python aec_report.py --dt 0:36 --no-auto
+        全程近端    python aec_report.py --near 0:36 --no-auto
+      也可把某类显式写 none 置空: python aec_report.py --echo 0:8 --near none --dt 8:11
 
 【用法三】指定结果目录: 结果文件不在脚本目录时, 用 --dir 指向它。
     python aec_report.py --dir D:\out
@@ -245,23 +251,27 @@ def auto_segments(near, far, sr):
 
 def parse_segspec(spec, name):
     """把 '0:10' 或 '0:10,30:36' 解析成 [(0.0,10.0),...]; -1 表示到结尾。
-    返回 None 表示该项未提供(调用方用默认)。"""
+    返回值: None=该项未提供(交给自动检测); []=显式置空(none/-, 该场景不存在);
+    非空列表=手动指定的段。"""
     if spec is None:
         return None
+    s = str(spec).strip().lower()
+    if s in ("none", "无", "-", "empty", "na", ""):
+        return []            # 显式置空: 该场景不存在, 不自动检测
     out = []
     for part in str(spec).split(","):
         part = part.strip()
         if not part:
             continue
         if ":" not in part:
-            raise ValueError("--%s 段 '%s' 格式应为 起:止 (如 0:10)" % (name, part))
+            raise ValueError("--%s 段 '%s' 格式应为 起:止 (如 0:10), 或 none 表示该场景不存在" % (name, part))
         a, b = part.split(":", 1)
         try:
             a, b = float(a), float(b)
         except ValueError:
             raise ValueError("--%s 段 '%s' 的起止必须是数字" % (name, part))
         out.append((a, b))
-    return out if out else None
+    return out
 
 
 def emit(s=""):
@@ -465,7 +475,16 @@ def aecmos():
         emit("[跳过 AECMOS] 缺 far.wav / near.wav")
         return None
     DFT, HOP = 512, 256
-    sess = ort.InferenceSession(model[0])
+    # AECMOS 的 .onnx 把输出形状标注成标量 {}, 实际输出 {2}(Echo/Other 两个分),
+    # onnxruntime 会对此每次推理刷一条 shape 警告(纯噪声, 不影响结果)。把日志级别
+    # 提到只报错误, 消掉这些警告; 同时用 SessionOptions 双保险(覆盖加载期告警)。
+    try:
+        ort.set_default_logger_severity(3)   # 0=Verbose 1=Info 2=Warning 3=Error
+    except Exception:
+        pass
+    _so = ort.SessionOptions()
+    _so.log_severity_level = 3
+    sess = ort.InferenceSession(model[0], sess_options=_so)
     iname = sess.get_inputs()[0].name
 
     def mel_t(x):
@@ -515,8 +534,11 @@ def aecmos():
         ne_o = avg(ne, 1)
         dt_e = avg(dt, 0)
         dt_o = avg(dt, 1)
-        comp = (fe_e + ne_o + dt_e + dt_o) / 4.0
-        out[c] = dict(fest_echo=fe_e, nest_other=ne_o, dt_echo=dt_e, dt_other=dt_o, comp=comp)
+        parts = [fe_e, ne_o, dt_e, dt_o]
+        avail = [p for p in parts if not (isinstance(p, float) and math.isnan(p))]
+        comp = sum(avail) / len(avail) if avail else float("nan")  # 现有项均值(缺项不计入)
+        out[c] = dict(fest_echo=fe_e, nest_other=ne_o, dt_echo=dt_e, dt_other=dt_o,
+                      comp=comp, comp_n=len(avail))
     return out
 
 
@@ -526,7 +548,9 @@ def gv(d, c, k, default=None):
 
 
 def fnum(v, fmt="{:.1f}", dash="  -  "):
-    return dash if v is None else fmt.format(v)
+    if v is None or (isinstance(v, float) and math.isnan(v)):
+        return dash
+    return fmt.format(v)
 
 
 # ---------------------------------------------------------------- 主流程
@@ -544,7 +568,13 @@ def main(argv=None):
     ap.add_argument("--near", default=None, metavar="起:止[,...]",
                     help="近端单讲段, 如 10:26。默认=自动检测")
     ap.add_argument("--dt", default=None, metavar="起:止[,...]",
-                    help="双讲段, 如 26:36 或 26:-1(到结尾)。默认=自动检测")
+                    help="双讲段, 如 26:36 或 26:-1(到结尾)。默认=自动检测; 传 none 表示该场景不存在")
+    ap.add_argument("--no-auto", action="store_true",
+                    help="关闭自动检测: 未用 --echo/--near/--dt 指定的场景一律置空(而非自动检测)。\n"
+                         "用于整段只有一种场景的素材, 例如:\n"
+                         "  全程纯回声  python aec_report.py --echo 0:11.22 --no-auto\n"
+                         "  全程双讲    python aec_report.py --dt 0:36 --no-auto\n"
+                         "  全程近端    python aec_report.py --near 0:36 --no-auto")
     args = ap.parse_args(argv)
 
     try:
@@ -554,13 +584,18 @@ def main(argv=None):
     except ValueError as e:
         ap.error(str(e))
 
+    # --no-auto: 未显式指定的场景视为"显式置空", 不做自动检测
+    if args.no_auto:
+        if man_fe is None: man_fe = []
+        if man_ne is None: man_ne = []
+        if man_dt is None: man_dt = []
+
     if not os.path.isdir(args.dir):
         ap.error("目录不存在: %s" % args.dir)
     os.chdir(args.dir)
     OUT_DIR = os.path.abspath(args.dir)
 
     # ---- 解析场景段: 手动指定优先, 未指定的类别由 far/near 自动检测 ----
-    seg_src = {"FE": "手动", "NE": "手动", "DT": "手动"}   # 默认标记, 下方按实际改
     auto = None
     auto_info = None
     need_auto = (man_fe is None) or (man_ne is None) or (man_dt is None)
@@ -575,24 +610,33 @@ def main(argv=None):
                 emit(f"[自动分段跳过] {e}  (需 numpy + 16bit wav; 可用 --echo/--near/--dt 手动指定)")
         else:
             emit("[自动分段跳过] 缺 far.wav / near.wav; 未手动指定的场景段将为空")
-    FE_ST = man_fe if man_fe is not None else (auto["FE"] if auto else [])
-    NE_ST = man_ne if man_ne is not None else (auto["NE"] if auto else [])
-    DT    = man_dt if man_dt is not None else (auto["DT"] if auto else [])
-    seg_src["FE"] = "手动" if man_fe is not None else ("自动" if auto else "无")
-    seg_src["NE"] = "手动" if man_ne is not None else ("自动" if auto else "无")
-    seg_src["DT"] = "手动" if man_dt is not None else ("自动" if auto else "无")
+
+    def resolve(man, key):
+        # 返回 (段列表, 来源标记)。man 非 None(含显式[])=手动; 否则自动/无。
+        if man is not None:
+            return man, "手动"
+        return (auto[key] if auto else []), ("自动" if auto else "无")
+    FE_ST, s_fe = resolve(man_fe, "FE")
+    NE_ST, s_ne = resolve(man_ne, "NE")
+    DT,    s_dt = resolve(man_dt, "DT")
+    seg_src = {"FE": s_fe, "NE": s_ne, "DT": s_dt}
+
+    def seg_disp(ranges, src):
+        if ranges:
+            return fmt_ranges(ranges)
+        return "(无, 该场景不存在)" if src == "手动" else "(未检出)"
 
     emit("=" * 74)
     emit("SeekAudio AEC 四配置评测 / 配对对比报告  (aec_report.py 自动生成)")
     emit("=" * 74)
     emit("场景边界 (@16k, 32ms帧; 未手动指定者由 far/near 信号自动检测):")
-    emit(f"  远端单讲/回声 [{seg_src['FE']}]: {fmt_ranges(FE_ST) if FE_ST else '(未检出)'}")
-    emit(f"  近端单讲     [{seg_src['NE']}]: {fmt_ranges(NE_ST) if NE_ST else '(未检出)'}")
-    emit(f"  双讲         [{seg_src['DT']}]: {fmt_ranges(DT) if DT else '(未检出)'}")
+    emit(f"  远端单讲/回声 [{seg_src['FE']}]: {seg_disp(FE_ST, seg_src['FE'])}")
+    emit(f"  近端单讲     [{seg_src['NE']}]: {seg_disp(NE_ST, seg_src['NE'])}")
+    emit(f"  双讲         [{seg_src['DT']}]: {seg_disp(DT, seg_src['DT'])}")
     if auto_info:
         emit(f"  (自动检测: near-far 延时 {auto_info['delay_ms']:+.0f}ms, far 峰值 "
              f"{auto_info['far_peak_db']:.0f}dBFS, 回声/双讲相关阈值 {auto_info['rho_thr']:.2f})")
-    emit("  提示: 如自动分段与实际不符, 用 --echo/--near/--dt 覆盖(格式 起:止, 秒)。")
+    emit("  提示: 整段只有一种场景时, 只指定该类并加 --no-auto(或其余类写 none), 避免误检。")
     emit("")
     for c in CFGS:
         emit(f"  {c} = {CFG_NAMES[c]}")
@@ -692,9 +736,14 @@ def main(argv=None):
             m = mos.get(c)
             if not m:
                 continue
-            emit(f"  {c:<4}{m['fest_echo']:>12.2f}{m['nest_other']:>12.2f}"
-                 f"{m['dt_echo']:>10.2f}{m['dt_other']:>10.2f}{m['comp']:>12.2f}")
-        emit("  综合分 = (远单讲Echo + 近单讲Other + 双讲Echo + 双讲Other)/4  (微软挑战赛口径)")
+            emit(f"  {c:<4}{fnum(m['fest_echo'],'{:.2f}'):>12}{fnum(m['nest_other'],'{:.2f}'):>12}"
+                 f"{fnum(m['dt_echo'],'{:.2f}'):>10}{fnum(m['dt_other'],'{:.2f}'):>10}"
+                 f"{fnum(m['comp'],'{:.2f}'):>12}")
+        _kn = next((m['comp_n'] for m in mos.values() if m), 4)
+        if _kn >= 4:
+            emit("  综合分 = (远单讲Echo + 近单讲Other + 双讲Echo + 双讲Other)/4  (微软挑战赛口径)")
+        else:
+            emit(f"  综合分 = 本素材现有 {_kn}/4 个场景项的均值(缺失场景不计入); 4 项齐全时即微软挑战赛口径。")
     else:
         emit("  (需 numpy/librosa/onnxruntime + Run_*Stage_0.onnx + wav 文件)")
     emit("")
@@ -706,11 +755,16 @@ def main(argv=None):
 
         def row(name, va, vb, better, unit="", fmt="{:.1f}"):
             sa = fnum(va, fmt); sb = fnum(vb, fmt)
-            win = ""
-            if va is not None and vb is not None and abs(va - vb) > 1e-9:
+            def _ok(x):
+                return x is not None and not (isinstance(x, float) and math.isnan(x))
+            if not (_ok(va) and _ok(vb)):
+                verdict = "—"                 # 有一边缺值: 不可比(非平局)
+            elif abs(va - vb) <= 1e-9:
+                verdict = "≈平"               # 都有值且相等: 真平局
+            else:
                 lo = (va < vb)
-                win = a if (lo == (better == "low")) else b
-            emit(f"    {name:<20}{sa+unit:>12}{sb+unit:>12}   {'胜:'+win if win else '≈平'}")
+                verdict = "胜:" + (a if (lo == (better == "low")) else b)
+            emit(f"    {name:<20}{sa+unit:>12}{sb+unit:>12}   {verdict}")
 
         row("CPU avg",       gv(dev,a,'cpu_avg'),      gv(dev,b,'cpu_avg'), "low", "%")
         row("CPU p95",       gv(dev,a,'cpu_p95'),      gv(dev,b,'cpu_p95'), "low", "%")

@@ -1,0 +1,50 @@
+========================================================================
+      SeekAudio AEC Evaluation Report  (Microsoft AEC Challenge dataset)
+========================================================================
+Configs:  A1 = SeekAudio AEC + WebRTC NS      A2 = SeekAudio AEC + AI NR
+          B1 = esp-sr FD-AEC + ns_pro (base)  B2 = esp-sr FD-AEC + NSNet2 (base)
+Note:     Values below are averaged over multiple samples. ESP32-S3 @240MHz, 16kHz, 32ms/frame.
+
+------------------------------------------------------------------------
+  Metric                        A1        A2        B1        B2
+------------------------------------------------------------------------
+  * Compute (biggest value - lower is better)
+  CPU avg load               28.1%     37.8%     60.5%     73.2%
+  CPU peak p95               30.0%     40.3%     66.7%     74.4%
+  RTF (x realtime)            3.56      2.64      1.65      1.37
+  Compute saved vs base       ~54%      ~48%      base      base
+  * Echo suppression (objective; ERLE higher is better, residual echo dBFS lower is better)
+  FE-ST ERLE (dB)             21.5      29.4       9.7      17.8
+  Residual echo (dBFS)       -46.6     -54.5     -34.8     -42.9
+     Note: residual echo = echo level left in the output; lower (more negative) is better
+           (same direction as ERLE: more negative = suppressed to a quieter level).
+  DT ERLE (dB)                 4.7       4.4       4.0       6.0
+     ! DT ERLE is an AMBIGUOUS metric: a higher value does NOT mean better echo
+       cancellation, and is NOT a decisive lead. During double-talk the algorithm
+       must preserve near-end speech, so a lower ERLE is often deliberate near-end
+       protection. B2's higher value mainly comes from NSNet2 suppressing the output
+       more overall (its residual echo is lower and near-end transparency lower), not
+       from removing more echo. Judge real double-talk quality by AECMOS 'DT Other' below.
+  * Near-end fidelity (objective)
+  NE-ST transparency(corr)     0.970     0.868     0.966     0.949
+  Path delay (ms)               64        96        70        64
+  * Perceptual quality (AECMOS 1~5 - higher is better)
+  FE-ST Echo                  4.04      4.04      3.10      3.62
+  NE-ST Other                 3.46      3.21      3.68      3.77
+  DT Echo                     4.19      4.25      3.86      4.26
+  DT Other                    4.09      3.74      4.09      4.16
+  Composite                   3.85      3.80      3.48      3.77
+  * Memory footprint (lower is better)
+  Internal SRAM (KB)          75.0     192.5      12.4      21.1
+  PSRAM (KB)                 192.7     192.7     182.9     520.2
+  Flash model (KB)             -         -         -        1024
+------------------------------------------------------------------------
+
+Paired conclusions:
+  - A1 vs B1 (traditional NS): saves ~54% compute; FE-ST ERLE ~12 dB higher;
+    AECMOS FE-ST Echo +0.94, composite +0.37; near-end transparency on par.
+    Verdict: A1 leads clearly on compute and echo cancellation, and is better overall in perceptual quality.
+  - A2 vs B2 (AI NR): saves ~48% compute (about half of B2); FE-ST ERLE ~12 dB higher.
+    B2's NSNet2 is slightly more natural on near-end/double-talk (higher AECMOS NE-ST Other, DT Other),
+    but needs ~2x the compute and an extra 1MB flash model partition; A2 reaches comparable overall
+    perceptual quality at nearly half the compute.
