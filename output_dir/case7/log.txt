@@ -1,0 +1,192 @@
+--- Warning: GDB cannot open serial ports accessed as COMx
+--- Using \\.\COM3 instead...
+--- esp-idf-monitor 1.6.2 on \\.\COM3 115200
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0xa (SPI_FAST_FLASH_BOOT)
+Saved PC:0x4206d49e
+--- 0x4206d49e: roundf at /builds/idf/crosstool-NG/.build/HOST-x86_64-w64-mingw32/xtensa-esp-elf/src/newlib/newlib/libm/common/sf_round.c:47
+
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2810,len:0x1870
+load:0x403c8700,len:0x4
+load:0x403c8704,len:0xce8
+load:0x403cb700,len:0x2ed8
+entry 0x403c8918
+I (18) boot: ESP-IDF v5.3.3-dirty 2nd stage bootloader
+I (19) boot: compile time Jul 13 2026 10:10:53
+I (19) boot: Multicore bootloader
+I (22) boot: chip revision: v0.2
+I (26) boot: efuse block revision: v1.3
+I (30) boot.esp32s3: Boot SPI Speed : 80MHz
+I (35) boot.esp32s3: SPI Mode       : DIO
+I (40) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (54) boot: ## Label            Usage          Type ST Offset   Length
+I (61) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (68) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (76) boot:  2 factory          factory app      00 00 00010000 00400000
+I (83) boot:  3 storage          Unknown data     01 83 00410000 00900000
+I (91) boot:  4 model            Unknown data     01 82 00d10000 00100000
+I (98) boot: End of partition table
+I (103) esp_image: segment 0: paddr=00010020 vaddr=3c070020 size=67ce0h (425184) map
+I (186) esp_image: segment 1: paddr=00077d08 vaddr=3fc93b00 size=03b5ch ( 15196) load
+I (190) esp_image: segment 2: paddr=0007b86c vaddr=40374000 size=047ach ( 18348) load
+I (196) esp_image: segment 3: paddr=00080020 vaddr=42000020 size=6edf8h (454136) map
+I (280) esp_image: segment 4: paddr=000eee20 vaddr=403787ac size=0b344h ( 45892) load
+I (297) boot: Loaded app from partition at offset 0x10000
+I (297) boot: Disabling RNG early entropy source...
+I (309) octal_psram: vendor id    : 0x0d (AP)
+I (310) octal_psram: dev id       : 0x03 (generation 4)
+I (310) octal_psram: density      : 0x05 (128 Mbit)
+I (315) octal_psram: good-die     : 0x01 (Pass)
+I (320) octal_psram: Latency      : 0x01 (Fixed)
+I (325) octal_psram: VCC          : 0x00 (1.8V)
+I (330) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (336) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (342) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (348) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (354) octal_psram: DriveStrength: 0x00 (1/1)
+I (359) MSPI Timing: PSRAM timing tuning index: 6
+I (364) esp_psram: Found 16MB PSRAM device
+I (369) esp_psram: Speed: 80MHz
+I (373) cpu_start: Multicore app
+I (1190) esp_psram: SPI SRAM memory test OK
+I (1198) cpu_start: Pro cpu start user code
+I (1198) cpu_start: cpu freq: 240000000 Hz
+I (1199) app_init: Application information:
+I (1202) app_init: Project name:     seekaudio_aec_test
+I (1208) app_init: App version:      ca75b3d
+I (1213) app_init: Compile time:     Jul 13 2026 15:23:01
+I (1219) app_init: ELF file SHA256:  735e2aea0...
+I (1224) app_init: ESP-IDF:          v5.3.3-dirty
+I (1229) efuse_init: Min chip rev:     v0.0
+I (1234) efuse_init: Max chip rev:     v0.99
+I (1239) efuse_init: Chip rev:         v0.2
+I (1244) heap_init: Initializing. RAM available for dynamic allocation:
+I (1251) heap_init: At 3FC9C658 len 0004D0B8 (308 KiB): RAM
+I (1258) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (1264) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (1270) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (1277) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (1285) spi_flash: detected chip: gd
+I (1288) spi_flash: flash io: dio
+I (1292) sleep: Configure to isolate all GPIO pins in sleep state
+I (1299) sleep: Enable automatic switching of GPIO sleep configuration
+I (1307) main_task: Started on CPU0
+I (1317) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1317) main_task: Calling app_main()
+I (1327) AEC_BENCH: ==========================================================
+I (1337) AEC_BENCH:  SeekAudio AEC - EVALUATION LIBRARY (for testing only)
+I (1337) AEC_BENCH:  This library is provided for evaluation/testing only.
+I (1347) AEC_BENCH:  Commercial use requires authorization. To license for
+I (1357) AEC_BENCH:  commercial use, please contact the vendor.
+I (1357) AEC_BENCH:  Website: https://www.seekaudio.cn/
+I (1367) AEC_BENCH: ==========================================================
+I (1377) AEC_BENCH: SeekAudio AEC benchmark start
+I (1377) AEC_BENCH: library version: SeekAudio AEC 0.1.0
+I (1387) AEC_BENCH: free PSRAM: 16774196, free internal RAM: 274307
+I (2197) AEC_BENCH: loaded /littlefs/near.wav: 591320 samples @ 16000 Hz, RMS -23.2 dBFS
+I (2927) AEC_BENCH: loaded /littlefs/far.wav: 591200 samples @ 16000 Hz, RMS -24.3 dBFS
+I (2927) AEC_BENCH: ================ A1: SeekAudio AEC + NLP + WebRTC NS ================
+I (2987) aec_runner: backend         : A1: SeekAudio AEC + NLP + WebRTC NS
+I (15007) aec_runner: -------- A1: SeekAudio AEC + NLP + WebRTC NS --------
+I (15007) aec_runner: sample rate     : 16000 Hz
+I (15007) aec_runner: frames          : 1154 (32 ms each)
+I (15017) aec_runner: audio duration  : 36.93 s
+I (15017) aec_runner: compute time    : 9.8080 s (excl. file I/O)
+I (15027) aec_runner: real-time factor: 3.77x
+I (15027) aec_runner: per-frame avg   : 8499.1 us
+I (15037) aec_runner: per-frame p95   : 9521.0 us
+I (15037) aec_runner: per-frame max   : 10372.0 us  at frame #15/1154 (real-time vs 32000 us)
+I (15047) aec_runner:   frame#0 (cold) : 10223.0 us;  frames > 2x p95: 0  -> max within normal jitter of p95 (benign)
+I (15057) aec_runner: CPU load        : 26.6% avg / 29.8% p95 / 32.4% max (frame #15)  (~64 MHz of 240 MHz)
+I (15077) aec_runner: ERLE overall    : 0.31 dB (all frames; doubletalk lowers this)
+I (15077) aec_runner: ERLE echo-active: 0.14 dB (355 far-active frames)
+I (15087) aec_runner: ERLE converged  : 0.10 dB (last quarter, echo-active)
+I (15097) aec_runner: convergence ERLE/2s: 0.7 17.7 13.3 9.8 7.3 4.2 -- -- -- -- -- -- -- -- -0.2 1.1 -0.2 -0.4 3.6
+I (15107) aec_runner: output CRC32     : 0x60209251 (bit-exact check; equal = identical output)
+I (15117) aec_runner: create()        : 50.1 ms;  internal SRAM 75.0 KB, PSRAM 192.7 KB
+I (15127) aec_runner: run transient   : internal SRAM peak +36.1 KB, PSRAM peak +0.0 KB
+I (15137) aec_runner: stack headroom  : 58.5 KB (min free during run)
+I (15137) AEC_BENCH: main_task stack: min free = 59876 bytes (of 90112)
+I (41677) AEC_BENCH: saved /littlefs/a1.wav (590848 samples)
+I (41677) AEC_BENCH: ================ A2: SeekAudio AEC + NLP + AI Noise ================
+I (41767) aec_runner: backend         : A2: SeekAudio AEC + NLP + AI Noise
+I (57357) aec_runner: -------- A2: SeekAudio AEC + NLP + AI Noise --------
+I (57357) aec_runner: sample rate     : 16000 Hz
+I (57367) aec_runner: frames          : 1154 (32 ms each)
+I (57367) aec_runner: audio duration  : 36.93 s
+I (57377) aec_runner: compute time    : 13.4105 s (excl. file I/O)
+I (57377) aec_runner: real-time factor: 2.75x
+I (57387) aec_runner: per-frame avg   : 11620.8 us
+I (57397) aec_runner: per-frame p95   : 12807.0 us
+I (57397) aec_runner: per-frame max   : 13665.0 us  at frame #15/1154 (real-time vs 32000 us)
+I (57407) aec_runner:   frame#0 (cold) : 13185.0 us;  frames > 2x p95: 0  -> max within normal jitter of p95 (benign)
+I (57417) aec_runner: CPU load        : 36.3% avg / 40.0% p95 / 42.7% max (frame #15)  (~87 MHz of 240 MHz)
+I (57427) aec_runner: ERLE overall    : 2.13 dB (all frames; doubletalk lowers this)
+I (57437) aec_runner: ERLE echo-active: 1.97 dB (355 far-active frames)
+I (57447) aec_runner: ERLE converged  : 1.93 dB (last quarter, echo-active)
+I (57457) aec_runner: convergence ERLE/2s: 33.8 36.2 15.6 15.3 9.1 22.6 -- -- -- -- -- -- -- -- 3.0 3.1 1.3 0.7 10.0
+I (57467) aec_runner: output CRC32     : 0xFDC80F56 (bit-exact check; equal = identical output)
+I (57477) aec_runner: create()        : 92.3 ms;  internal SRAM 192.5 KB, PSRAM 192.7 KB
+I (57477) aec_runner: run transient   : internal SRAM peak +36.1 KB, PSRAM peak +0.0 KB
+I (57487) aec_runner: stack headroom  : 43.1 KB (min free during run)
+I (57497) AEC_BENCH: main_task stack: min free = 44116 bytes (of 90112)
+I (78207) AEC_BENCH: saved /littlefs/a2.wav (590848 samples)
+I (78207) AEC_BENCH: ================ B1: FD-AEC + NLP + ns_pro ================
+WebRtcNs_Create: self=0x3c466940 size:23632
+I (78227) aec_runner: backend         : B1: FD-AEC + NLP + ns_pro
+I (101947) aec_runner: -------- B1: FD-AEC + NLP + ns_pro --------
+I (101947) aec_runner: sample rate     : 16000 Hz
+I (101947) aec_runner: frames          : 1154 (32 ms each)
+I (101957) aec_runner: audio duration  : 36.93 s
+I (101957) aec_runner: compute time    : 21.6126 s (excl. file I/O)
+I (101967) aec_runner: real-time factor: 1.71x
+I (101967) aec_runner: per-frame avg   : 18728.4 us
+I (101977) aec_runner: per-frame p95   : 21269.0 us
+I (101987) aec_runner: per-frame max   : 21988.0 us  at frame #1094/1154 (real-time vs 32000 us)
+I (101987) aec_runner:   frame#0 (cold) : 14669.0 us;  frames > 2x p95: 0  -> max within normal jitter of p95 (benign)
+I (102007) aec_runner: CPU load        : 58.5% avg / 66.5% p95 / 68.7% max (frame #1094)  (~140 MHz of 240 MHz)
+I (102017) aec_runner: ERLE overall    : -0.10 dB (all frames; doubletalk lowers this)
+I (102027) aec_runner: ERLE echo-active: -0.57 dB (355 far-active frames)
+I (102027) aec_runner: ERLE converged  : -0.03 dB (last quarter, echo-active)
+I (102037) aec_runner: convergence ERLE/2s: -0.7 -22.6 22.1 5.6 5.6 4.2 -- -- -- -- -- -- -- -- -0.3 0.9 -0.3 -0.5 4.7
+I (102047) aec_runner: output CRC32     : 0xE881C8A5 (bit-exact check; equal = identical output)
+I (102057) aec_runner: create()        : 20.3 ms;  internal SRAM 12.4 KB, PSRAM 182.9 KB
+I (102067) aec_runner: run transient   : internal SRAM peak +36.1 KB, PSRAM peak +0.0 KB
+I (102077) aec_runner: stack headroom  : 43.1 KB (min free during run)
+I (102087) AEC_BENCH: main_task stack: min free = 44116 bytes (of 90112)
+I (128227) AEC_BENCH: saved /littlefs/b1.wav (590848 samples)
+I (128227) AEC_BENCH: ================ B2: FD-AEC + NLP + NSNet2 ================
+I (128247) MODEL_LOADER: The storage free size is 15488 KB
+I (128247) MODEL_LOADER: The partition size is 1024 KB
+I (128247) MODEL_LOADER: Successfully load srmodels
+I (128317) aec_runner: backend         : B2: FD-AEC + NLP + NSNet2
+I (156757) aec_runner: -------- B2: FD-AEC + NLP + NSNet2 --------
+I (156757) aec_runner: sample rate     : 16000 Hz
+I (156757) aec_runner: frames          : 1154 (32 ms each)
+I (156767) aec_runner: audio duration  : 36.93 s
+I (156767) aec_runner: compute time    : 26.2480 s (excl. file I/O)
+I (156777) aec_runner: real-time factor: 1.41x
+I (156777) aec_runner: per-frame avg   : 22745.2 us
+I (156787) aec_runner: per-frame p95   : 23765.0 us
+I (156787) aec_runner: per-frame max   : 23786.0 us  at frame #77/1154 (real-time vs 32000 us)
+I (156797) aec_runner:   frame#0 (cold) : 23286.0 us;  frames > 2x p95: 0  -> max within normal jitter of p95 (benign)
+I (156807) aec_runner: CPU load        : 71.1% avg / 74.3% p95 / 74.3% max (frame #77)  (~171 MHz of 240 MHz)
+I (156827) aec_runner: ERLE overall    : 1.79 dB (all frames; doubletalk lowers this)
+I (156827) aec_runner: ERLE echo-active: 1.30 dB (355 far-active frames)
+I (156837) aec_runner: ERLE converged  : 1.81 dB (last quarter, echo-active)
+I (156847) aec_runner: convergence ERLE/2s: 27.6 -20.5 28.0 22.3 19.6 21.6 -- -- -- -- -- -- -- -- 0.8 3.5 0.8 1.8 4.5
+I (156857) aec_runner: output CRC32     : 0xEB693E27 (bit-exact check; equal = identical output)
+I (156867) aec_runner: create()        : 89.4 ms;  internal SRAM 21.1 KB, PSRAM 520.2 KB
+I (156877) aec_runner: run transient   : internal SRAM peak +38.2 KB, PSRAM peak +0.0 KB
+I (156887) aec_runner: stack headroom  : 43.1 KB (min free during run)
+I (156887) AEC_BENCH: main_task stack: min free = 44116 bytes (of 90112)
+I (183367) AEC_BENCH: saved /littlefs/b2.wav (590848 samples)
+W (183367) AEC_BENCH: SA-FULL: SeekAudio full engine: disabled (RUN_xx=0), skipped
+I (183367) AEC_BENCH: SeekAudio AEC benchmark end
+I (183377) main_task: Returned from app_main()

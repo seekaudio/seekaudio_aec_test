@@ -1,0 +1,22 @@
+SeekAudio AEC Library - Evaluation License
+==========================================
+
+The binary library libseekaudio_aec.a (and any other binary files in this
+directory) is proprietary software of SeekAudio. All rights reserved.
+
+Subject to the terms below, SeekAudio grants you a non-exclusive,
+non-transferable, royalty-free license to use this binary SOLELY for the
+purpose of evaluating and benchmarking the SeekAudio AEC library on ESP32-S3
+hardware in conjunction with this test project.
+
+You may NOT:
+  - use the binary in any product or service, whether commercial or not;
+  - redistribute the binary outside verbatim copies/forks of this repository;
+  - reverse engineer, decompile, or disassemble the binary, except to the
+    extent expressly permitted by applicable law;
+  - remove or alter any proprietary notices.
+
+The evaluation binary may include time- or usage-limited trial restrictions.
+For a production/commercial license, please contact SeekAudio: https://www.seekaudio.cn/
+
+THE BINARY IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
