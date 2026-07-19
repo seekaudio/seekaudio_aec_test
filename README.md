@@ -4,6 +4,8 @@
 
 在 ESP32-S3 上对 **SeekAudio AEC** 与 **esp-sr AFE AEC** 进行同条件 A/B 对比评测的完整工程：同一块板、同一段素材、同一套自动化报告工具，四个配置依次运行，结果可一键复现。
 
+> 💡 **推广期福利**：SeekAudio AEC 现开放免费授权，首批接入团队/个人欢迎[联系我们](https://www.seekaudio.cn/)。
+
 ## 核心结果速览
 
 以下为多样本平均数据（ESP32-S3 @240 MHz，16 kHz，32 ms 帧，微软 AEC Challenge 数据集）：
@@ -126,6 +128,10 @@ partitions.csv              分区表（storage=littlefs 素材与输出，model
 ## 许可
 
 仓库中的测试代码与文档以 MIT 许可发布；`components/seekaudio_aec/lib/` 下的 `libseekaudio_aec.a` 为 SeekAudio 专有二进制，仅授权评估用途，详见 [LICENSE](LICENSE) 与 [components/seekaudio_aec/LICENSE.txt](components/seekaudio_aec/LICENSE.txt)。
+
+## 🎁 推广期免费授权
+
+SeekAudio AEC 正在推广期，**目前可免费授权使用**。欢迎愿意“吃第一个螃蟹”的团队或个人联系获取授权 —— 你的早期反馈，我们会认真对待，并优先支持。
 
 ## 联系
 
