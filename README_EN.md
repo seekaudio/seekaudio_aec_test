@@ -2,6 +2,16 @@
 
 # seekaudio_aec_test
 
+![Compute saved](https://img.shields.io/badge/compute_saved-~54%25-brightgreen) ![RTF](https://img.shields.io/badge/RTF-3.56×-brightgreen) ![FE-ST ERLE](https://img.shields.io/badge/FE--ST_ERLE-21.5dB-blue) ![AECMOS](https://img.shields.io/badge/AECMOS-3.85-blue) ![Platform](https://img.shields.io/badge/platform-ESP32--S3-lightgrey)
+
+> ### ⚡ Half the compute, cleaner echo cancellation
+>
+> On the ESP32-S3, **SeekAudio AEC uses about half the compute of the official esp-sr baseline (A1 saves ~54%, A2 saves ~48%), while cancelling echo more effectively (far-end single-talk ERLE 8–12 dB higher) and scoring better on perceptual quality (AECMOS).**
+>
+> - 🚀 **Half the compute** — CPU load **28%** vs baseline **60%**, RTF **3.56×** vs **1.65×**
+> - 🎯 **Stronger echo cancellation** — FE-ST ERLE **21.5 dB** vs **9.7 dB**, residual echo **12 dB** lower
+> - 👂 **Better perceived quality** — AECMOS composite **3.85** vs **3.48**, echo-suppression score **4.04** vs **3.10**
+
 A complete, reproducible A/B benchmark of **SeekAudio AEC** versus **esp-sr AFE AEC** on the ESP32-S3: same board, same test material, same automated report tool. Four configurations run back-to-back and every number can be reproduced with one flash-and-run cycle.
 
 ## Results at a glance

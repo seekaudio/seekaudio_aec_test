@@ -2,6 +2,16 @@
 
 # seekaudio_aec_test
 
+![算力节省](https://img.shields.io/badge/算力节省-~54%25-brightgreen) ![RTF](https://img.shields.io/badge/RTF-3.56×-brightgreen) ![远端单讲ERLE](https://img.shields.io/badge/远端单讲ERLE-21.5dB-blue) ![AECMOS综合](https://img.shields.io/badge/AECMOS综合-3.85-blue) ![平台](https://img.shields.io/badge/平台-ESP32--S3-lightgrey)
+
+> ### ⚡ 算力砍半，回声消得更干净
+>
+> 在 ESP32-S3 上，**SeekAudio AEC 相比 esp-sr 官方基线节省约一半算力（A1 省 ~54%、A2 省 ~48%），同时回声消除更强（远端单讲 ERLE 高 8~12 dB），感知质量（AECMOS）更优。**
+>
+> - 🚀 **算力省一半** —— CPU 平均负载 **28%** vs 基线 **60%**，RTF **3.56×** vs **1.65×**
+> - 🎯 **回声消除更强** —— 远端单讲 ERLE **21.5 dB** vs **9.7 dB**，残余回声低 **12 dB**
+> - 👂 **听感更优** —— AECMOS 综合 **3.85** vs **3.48**，回声抑制感知 **4.04** vs **3.10**
+
 在 ESP32-S3 上对 **SeekAudio AEC** 与 **esp-sr AFE AEC** 进行同条件 A/B 对比评测的完整工程：同一块板、同一段素材、同一套自动化报告工具，四个配置依次运行，结果可一键复现。
 
 > 💡 **推广期福利**：SeekAudio AEC 现开放免费授权，首批接入团队/个人欢迎[联系我们](https://www.seekaudio.cn/)。
